@@ -197,14 +197,35 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 	}
 
 	/**
-	 * Save edited transcript
+	 * Save edited transcript and remove AI responses that were based on the wrong message
 	 */
-	function saveEdit(id: string) {
+	async function saveEdit(id: string) {
+		// Find the edited message index
+		const editIndex = transcripts.findIndex(t => t.id === id);
+
+		// Update the message text
 		transcripts = transcripts.map(t =>
 			t.id === id ? { ...t, text: editText } : t
 		);
+
+		// Remove all messages after this edited message
+		// (since AI was responding to the incorrect version)
+		transcripts = transcripts.slice(0, editIndex + 1);
+
 		editingId = null;
 		editText = '';
+
+		// Add a helpful hint if connected
+		if (isConnected && isReady) {
+			const hintMsg = {
+				speaker: 'agent' as const,
+				text: '✏️ Message updated! Please say your corrected message out loud so I can respond to it.',
+				isFinal: true,
+				id: `${Date.now()}-hint`
+			};
+			transcripts = [...transcripts, hintMsg];
+			scrollToBottom();
+		}
 	}
 
 	/**
@@ -285,9 +306,12 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 									class="edit-textarea"
 									rows="3"
 								></textarea>
+								<div class="edit-hint">
+									💡 Editing will remove AI responses after this message
+								</div>
 								<div class="edit-actions">
 									<button onclick={() => saveEdit(transcript.id)} class="btn-save">
-										💾 Save
+										💾 Save & Clear After
 									</button>
 									<button onclick={cancelEdit} class="btn-cancel">
 										✖️ Cancel
@@ -602,6 +626,16 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 
 	.edit-container {
 		margin-top: 0.5rem;
+	}
+
+	.edit-hint {
+		margin-top: 0.5rem;
+		padding: 0.5rem 0.75rem;
+		background: #fef3c7;
+		border-left: 3px solid #f59e0b;
+		border-radius: 6px;
+		font-size: 0.85rem;
+		color: #92400e;
 	}
 
 	.edit-textarea {
