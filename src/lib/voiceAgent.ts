@@ -141,7 +141,10 @@ export class VoiceAgent {
 				// Agent audio - note: it's in the 'data' field, not 'audio'
 				if (message.data) {
 					const audioData = this.base64ToArrayBuffer(message.data);
+					console.log('Received audio data:', audioData.byteLength, 'bytes');
 					this.config.onAudio?.(audioData);
+				} else {
+					console.warn('reply.audio received but no data field');
 				}
 				break;
 

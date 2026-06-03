@@ -55,6 +55,11 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 			// Create audio context for playback
 			audioContext = new AudioContext({ sampleRate: 24000 });
 
+			// Resume audio context (required by browser autoplay policy)
+			if (audioContext.state === 'suspended') {
+				await audioContext.resume();
+			}
+
 			// Create voice agent
 			voiceAgent = new VoiceAgent({
 				systemPrompt,
@@ -131,7 +136,15 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 	 * Play audio from agent
 	 */
 	async function playAudio(audioData: ArrayBuffer) {
-		if (!audioContext) return;
+		if (!audioContext) {
+			console.warn('AudioContext not initialized');
+			return;
+		}
+
+		// Resume audio context if suspended (browser autoplay policy)
+		if (audioContext.state === 'suspended') {
+			await audioContext.resume();
+		}
 
 		try {
 			// Convert PCM16 to AudioBuffer
@@ -152,6 +165,8 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 			source.buffer = audioBuffer;
 			source.connect(audioContext.destination);
 			source.start();
+
+			console.log(`Playing audio chunk: ${audioData.byteLength} bytes`);
 		} catch (err) {
 			console.error('Audio playback error:', err);
 		}
