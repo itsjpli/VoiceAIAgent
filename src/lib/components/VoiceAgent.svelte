@@ -115,9 +115,9 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 	}
 
 	/**
-	 * Disconnect from Voice Agent
+	 * Pause Voice Agent (keeps chat history)
 	 */
-	function disconnect() {
+	function pauseConversation() {
 		if (voiceAgent) {
 			voiceAgent.disconnect();
 			voiceAgent = null;
@@ -130,6 +130,15 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 		isPlaying = false;
 		isConnected = false;
 		isReady = false;
+		// Keep transcripts intact!
+	}
+
+	/**
+	 * End and clear everything
+	 */
+	function endAndClear() {
+		pauseConversation();
+		transcripts = [];
 	}
 
 	/**
@@ -225,7 +234,7 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 	}
 
 	onDestroy(() => {
-		disconnect();
+		pauseConversation();
 	});
 </script>
 
@@ -247,7 +256,7 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 	<div class="transcript-container" bind:this={transcriptContainer}>
 		{#if transcripts.length === 0}
 			<div class="empty-state">
-				<p>No conversation yet. Click "Start Conversation" to begin!</p>
+				<p>💬 No conversation yet. Click "Start Conversation" to begin!</p>
 			</div>
 		{:else}
 			<div class="transcripts">
@@ -305,9 +314,11 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 			{#if error}
 				<div class="status-error">❌ {error}</div>
 			{:else if isReady}
-				<div class="status-ready">✅ Connected</div>
+				<div class="status-ready">✅ Connected • Mic is live</div>
 			{:else if isConnected}
 				<div class="status-connecting">🔄 Connecting...</div>
+			{:else if transcripts.length > 0}
+				<div class="status-paused">⏸️ Paused • Chat history saved</div>
 			{:else}
 				<div class="status-idle">Ready to start</div>
 			{/if}
@@ -316,17 +327,17 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 		<div class="controls">
 			{#if !isConnected}
 				<button onclick={connect} class="btn btn-primary btn-large">
-					🎤 Start Conversation
+					{transcripts.length > 0 ? '🎤 Resume' : '🎤 Start Conversation'}
 				</button>
 			{:else}
-				<button onclick={disconnect} class="btn btn-danger">
-					⏹️ End Conversation
+				<button onclick={pauseConversation} class="btn btn-warning">
+					⏸️ Pause
 				</button>
 			{/if}
 
 			{#if transcripts.length > 0}
-				<button onclick={clearTranscripts} class="btn btn-secondary">
-					🗑️ Clear History
+				<button onclick={endAndClear} class="btn btn-secondary">
+					🗑️ New Chat
 				</button>
 			{/if}
 		</div>
@@ -450,9 +461,13 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 		border-color: #E3F452;
 	}
 
-	.btn-danger {
-		background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+	.btn-warning {
+		background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
 		color: white;
+	}
+
+	.btn-warning:hover {
+		background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 	}
 
 	.btn-secondary {
@@ -487,6 +502,11 @@ IMPORTANT: Keep responses SHORT and snappy - 1-3 sentences max unless they ask f
 
 	.status-idle {
 		color: #9ca3af;
+	}
+
+	.status-paused {
+		color: #f59e0b;
+		font-weight: 700;
 	}
 
 	.transcript-container {
