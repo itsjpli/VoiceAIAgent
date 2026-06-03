@@ -84,9 +84,9 @@ export class VoiceAgent {
 				input: {
 					format: { encoding: 'audio/pcm' },
 					turn_detection: {
-						vad_threshold: 0.5,
-						min_silence: 200,
-						max_silence: 1000,
+						vad_threshold: 0.4,
+						min_silence: 100,
+						max_silence: 600,
 						interrupt_response: true
 					}
 				},
